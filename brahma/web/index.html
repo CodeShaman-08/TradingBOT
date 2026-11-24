@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>BRAHMA ALARM · Dashboard</title>
+  <link rel="stylesheet" href="/static/styles.css" />
+  <script src="https://unpkg.com/lightweight-charts@4.1.0/dist/lightweight-charts.standalone.production.js"></script>
+</head>
+<body>
+  <div id="toast" class="toast hidden"></div>
+
+  <header class="topbar">
+    <div class="brand">
+      <div class="logo">B</div>
+      <div>
+        <h1>BRAHMA <span>ALARM</span></h1>
+        <p class="sub">Dhan options bot · risk-controlled · no database</p>
+      </div>
+    </div>
+    <div class="status-strip">
+      <span id="pill-run" class="pill">starting</span>
+      <span id="pill-mode" class="pill">paper</span>
+      <span id="pill-session" class="pill">—</span>
+      <span id="pill-provider" class="pill">—</span>
+      <span id="clock" class="clock">--:--:-- IST</span>
+    </div>
+  </header>
+
+  <main>
+    <section class="kpis">
+      <div class="card kpi">
+        <span class="label">Day P&amp;L</span>
+        <strong id="kpi-pnl">—</strong>
+        <span id="kpi-pnl-sub" class="muted">realized / unrealized</span>
+      </div>
+      <div class="card kpi">
+        <span class="label">Position</span>
+        <strong id="kpi-position">FLAT</strong>
+        <span id="kpi-position-sub" class="muted">—</span>
+      </div>
+      <div class="card kpi">
+        <span class="label">Underlying LTP</span>
+        <strong id="kpi-ltp">—</strong>
+        <span id="kpi-ltp-sub" class="muted">—</span>
+      </div>
+      <div class="card kpi">
+        <span class="label">Signal</span>
+        <strong id="kpi-signal">—</strong>
+        <span id="kpi-signal-sub" class="muted">—</span>
+      </div>
+      <div class="card kpi">
+        <span class="label">Entries today</span>
+        <strong id="kpi-entries">0</strong>
+        <span id="kpi-entries-sub" class="muted">—</span>
+      </div>
+      <div class="card kpi">
+        <span class="label">Active stop</span>
+        <strong id="kpi-stop">—</strong>
+        <span id="kpi-stop-sub" class="muted">software-monitored</span>
+      </div>
+    </section>
+
+    <section class="grid-main">
+      <div class="card chart-card">
+        <div class="card-head">
+          <h2 id="chart-title">Underlying · 1m</h2>
+          <div class="legend">
+            <span class="dot a"></span> Line A
+            <span class="dot b"></span> Line B
+          </div>
+        </div>
+        <div id="chart" class="chart"></div>
+        <div id="chart-fallback" class="chart-fallback hidden">
+          Chart library could not load (offline CDN). The bot is still running.
+        </div>
+        <div id="market-meta" class="market-meta muted">waiting for candles…</div>
+      </div>
+
+      <aside class="card side">
+        <div class="card-head">
+          <h2>Risk &amp; control</h2>
+          <span id="pill-ready" class="pill">—</span>
+        </div>
+
+        <div class="rows">
+          <div class="row"><span>Kill switch</span><b id="risk-kill">—</b></div>
+          <div class="row"><span>Entries</span><b id="risk-entries">—</b></div>
+          <div class="row"><span>Pending order</span><b id="risk-pending">—</b></div>
+          <div class="row"><span>Last exit</span><b id="risk-last-exit">—</b></div>
+          <div class="row"><span>Instrument</span><b id="risk-instrument">—</b></div>
+          <div class="row"><span>Lot / freeze</span><b id="risk-lot">—</b></div>
+          <div class="row"><span>Broker SL</span><b id="risk-broker-sl">—</b></div>
+        </div>
+
+        <div id="error-box" class="error-box hidden"></div>
+
+        <div class="controls">
+          <button id="btn-halt" class="btn danger">Halt</button>
+          <button id="btn-resume" class="btn ok">Resume</button>
+          <button id="btn-block" class="btn warn">Block entries</button>
+          <button id="btn-allow" class="btn">Allow entries</button>
+          <button id="btn-flatten" class="btn danger-outline">Flatten</button>
+          <button id="btn-reset" class="btn subtle">Reset paper</button>
+          <button id="btn-live" class="btn danger">Go live</button>
+          <button id="btn-paper" class="btn ok">Paper mode</button>
+        </div>
+        <p class="hint">
+          Every control asks you to type the action word. Go live uses real Dhan orders and blocks
+          entries until you RESUME. A restart returns to the mode set in <code>.env</code>.
+        </p>
+      </aside>
+    </section>
+
+    <section class="grid-lower">
+      <div class="card">
+        <div class="card-head"><h2>Trades</h2><span class="muted" id="trades-count">0</span></div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Time</th><th>Event</th><th>Side</th><th>Qty</th><th>Price</th><th>P&amp;L</th><th>Reason</th></tr>
+            </thead>
+            <tbody id="trades-body"><tr><td colspan="7" class="empty">No trades yet</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h2>Orders</h2><span class="muted" id="orders-count">0</span></div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Time</th><th>Event</th><th>Kind</th><th>Side</th><th>Qty</th><th>Price</th><th>Detail</th></tr>
+            </thead>
+            <tbody id="orders-body"><tr><td colspan="7" class="empty">No orders yet</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section class="grid-lower">
+      <div class="card">
+        <div class="card-head">
+          <h2>Backtest · Kalman vs no Kalman</h2>
+          <button id="btn-backtest" class="btn small">Run comparison</button>
+        </div>
+        <p class="hint">Signal quality on the underlying (long/short flip). Not option-premium P&amp;L.</p>
+        <div id="backtest-verdict" class="verdict muted">Run a comparison to see whether the Kalman layer earns its place.</div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Metric</th><th>Kalman</th><th>No Kalman</th><th>Δ</th></tr>
+            </thead>
+            <tbody id="backtest-body"><tr><td colspan="4" class="empty">No backtest yet</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h2>Log</h2><span class="muted">last 150 lines</span></div>
+        <pre id="logs" class="logs">waiting for logs…</pre>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <span>BRAHMA ALARM v2 · paper by default · live requires explicit confirmation</span>
+    <span id="footer-instrument"></span>
+  </footer>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
